@@ -1,0 +1,83 @@
+@import "tailwindcss";
+
+@theme {
+  --color-surface-container-highest: #24252b;
+  --color-secondary: #ae89ff;
+  --color-tertiary: #83e8ff;
+  --color-on-error: #490006;
+  --color-error: #ff716c;
+  --color-on-primary-container: #00214f;
+  --color-tertiary-fixed-dim: #00d0ee;
+  --color-error-container: #9f05019;
+  --color-on-primary-fixed-variant: #002a61;
+  --color-surface-dim: #0d0e12;
+  --color-on-primary-fixed: #000000;
+  --color-secondary-container: #5527a9;
+  --color-tertiary-fixed: #21dffe;
+  --color-surface: #0d0e12;
+  --color-surface-tint: #85adff;
+  --color-outline: #75757a;
+  --color-inverse-surface: #faf8fe;
+  --color-on-tertiary: #005562;
+  --color-surface-bright: #2a2c32;
+  --color-on-tertiary-fixed-variant: #005562;
+  --color-on-secondary-fixed: #420397;
+  --color-on-tertiary-fixed: #00363f;
+  --color-on-secondary: #2a0066;
+  --color-tertiary-container: #21dffe;
+  --color-primary-dim: #689cff;
+  --color-on-background: #faf8fe;
+  --color-surface-container-high: #1e1f25;
+  --color-primary-container: #6d9fff;
+  --color-error-dim: #d7383b;
+  --color-primary: #85adff;
+  --color-on-surface-variant: #abaab0;
+  --color-inverse-primary: #005bc2;
+  --color-secondary-fixed-dim: #cfb8ff;
+  --color-background: #0d0e12;
+  --color-on-secondary-container: #dac7ff;
+  --color-on-primary: #002c65;
+  --color-surface-container: #18191e;
+  --color-on-error-container: #ffa8a3;
+  --color-inverse-on-surface: #54555a;
+  --color-secondary-dim: #ae89ff;
+  --color-tertiary-dim: #00d0ee;
+  --color-primary-fixed: #6d9fff;
+  --color-surface-container-low: #121318;
+  --color-surface-container-lowest: #000000;
+  --color-primary-fixed-dim: #5291ff;
+  --color-on-tertiary-container: #004b57;
+  --color-on-secondary-fixed-variant: #5f33b4;
+  --color-outline-variant: #47484c;
+  --color-secondary-fixed: #dbc9ff;
+  --color-surface-variant: #24252b;
+  --color-on-surface: #faf8fe;
+
+  --font-headline: "Manrope", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --font-label: "Inter", sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-on-surface font-body;
+  }
+}
+
+.glass-panel {
+  background: rgba(36, 37, 43, 0.6);
+  backdrop-filter: blur(20px);
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1e1f25;
+  border-radius: 10px;
+}
