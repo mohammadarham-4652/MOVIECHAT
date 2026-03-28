@@ -1,19 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  PlusCircle, 
-  Explore, 
-  Bookmarks, 
-  AutoAwesome, 
-  Settings, 
-  Search, 
-  Notifications, 
-  AccountCircle, 
-  Person, 
+import {
+  PlusCircle,
+  Explore,
+  Bookmarks,
+  AutoAwesome,
+  Settings,
+  Coffee,
+  Person,
   Movie as MovieIcon,
   ArrowUpward,
   AttachFile,
   Close,
-  Star
+  Star,
+  Menu
 } from './components/Icons';
 import { cn } from './lib/utils';
 import { getMovieRecommendations } from './services/gemini';
@@ -23,23 +22,54 @@ import { motion, AnimatePresence } from 'motion/react';
 const MoviePoster = ({ src, alt, className }) => {
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [realSrc, setRealSrc] = useState(src);
 
   // Basic check to see if the URL looks like a direct image link
   const isLikelyImage = (url) => {
     const extensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
-    const lowerUrl = url.toLowerCase();
+    const lowerUrl = url?.toLowerCase() || '';
     return extensions.some(ext => lowerUrl.includes(ext)) || lowerUrl.includes('image.tmdb.org') || lowerUrl.includes('media-amazon.com');
   };
 
-  const displaySrc = (error || !isLikelyImage(src)) 
-    ? `https://picsum.photos/seed/${encodeURIComponent(alt)}/800/1200` 
-    : src;
+  useEffect(() => {
+    if (error || !isLikelyImage(src)) {
+      const fetchPosterSecurely = async () => {
+        try {
+          // 1. Bypass local SSL blocks by proxying the OMDb API request through corsproxy
+          const omdbUrl = `https://www.omdbapi.com/?apikey=thewdb&t=${encodeURIComponent(alt)}`;
+          const proxyApiUrl = `https://corsproxy.io/?url=${encodeURIComponent(omdbUrl)}`;
+          
+          const res = await fetch(proxyApiUrl);
+          const data = await res.json();
+          
+          if (data.Poster && data.Poster !== 'N/A') {
+            // 2. Wrap the resulting Amazon/TMDB image URL in a trusted CDN proxy (wsrv.nl) to bypass client-side SSL blocking on the image itself
+            setRealSrc(`https://wsrv.nl/?url=${encodeURIComponent(data.Poster)}&w=800&h=1200&fit=cover`);
+            return;
+          }
+          setRealSrc(`https://picsum.photos/seed/${encodeURIComponent(alt)}/800/1200`);
+        } catch (err) {
+          setRealSrc(`https://picsum.photos/seed/${encodeURIComponent(alt)}/800/1200`);
+        }
+      };
+      
+      const timeout = setTimeout(fetchPosterSecurely, 100);
+      return () => clearTimeout(timeout);
+    } else {
+      // If the URL is valid but the network blocks it, wrap the original image in the CDN proxy too!
+      if (src && src.startsWith('http')) {
+        setRealSrc(`https://wsrv.nl/?url=${encodeURIComponent(src)}&w=800&h=1200&fit=cover`);
+      } else {
+        setRealSrc(src);
+      }
+    }
+  }, [src, alt, error]);
 
   return (
     <div className={cn("relative overflow-hidden bg-surface-container", className)}>
       {loading && <div className="absolute inset-0 animate-pulse bg-white/5" />}
       <img
-        src={displaySrc}
+        src={realSrc}
         alt={alt}
         className={cn(
           "w-full h-full object-cover transition-opacity duration-500",
@@ -47,7 +77,7 @@ const MoviePoster = ({ src, alt, className }) => {
         )}
         onLoad={() => setLoading(false)}
         onError={() => {
-          setError(true);
+          if (!error) setError(true);
           setLoading(false);
         }}
         referrerPolicy="no-referrer"
@@ -62,9 +92,16 @@ export default function App() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [selectedMovie, setSelectedMovie] = useState(null);
-  const [watchlist, setWatchlist] = useState([]);
-  const [watchedList, setWatchedList] = useState([]);
+  const [watchlist, setWatchlist] = useState(() => {
+    const saved = localStorage.getItem('moviechat_watchlist');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [watchedList, setWatchedList] = useState(() => {
+    const saved = localStorage.getItem('moviechat_watched');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [activeTab, setActiveTab] = useState('discover');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const chatEndRef = useRef(null);
 
@@ -73,6 +110,14 @@ export default function App() {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [currentSession?.messages]);
+
+  useEffect(() => {
+    localStorage.setItem('moviechat_watchlist', JSON.stringify(watchlist));
+  }, [watchlist]);
+
+  useEffect(() => {
+    localStorage.setItem('moviechat_watched', JSON.stringify(watchedList));
+  }, [watchedList]);
 
   const handleNewChat = () => {
     const newSession = {
@@ -84,6 +129,7 @@ export default function App() {
     setSessions([newSession, ...sessions]);
     setCurrentSessionId(newSession.id);
     setActiveTab('discover');
+    setIsSidebarOpen(false);
   };
 
   const handleSendMessage = async () => {
@@ -109,9 +155,9 @@ export default function App() {
       timestamp: Date.now()
     };
 
-    setSessions(prev => prev.map(s => 
-      s.id === sessionId 
-        ? { ...s, messages: [...s.messages, userMessage], title: s.messages.length === 0 ? input.slice(0, 30) : s.title } 
+    setSessions(prev => prev.map(s =>
+      s.id === sessionId
+        ? { ...s, messages: [...s.messages, userMessage], title: s.messages.length === 0 ? input.slice(0, 30) : s.title }
         : s
     ));
     setInput('');
@@ -120,7 +166,7 @@ export default function App() {
     try {
       const history = currentSession?.messages.map(m => ({ role: m.role, content: m.content })) || [];
       const result = await getMovieRecommendations(input, history);
-      
+
       const aiMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
@@ -129,9 +175,9 @@ export default function App() {
         timestamp: Date.now()
       };
 
-      setSessions(prev => prev.map(s => 
-        s.id === sessionId 
-          ? { ...s, messages: [...s.messages, aiMessage] } 
+      setSessions(prev => prev.map(s =>
+        s.id === sessionId
+          ? { ...s, messages: [...s.messages, aiMessage] }
           : s
       ));
     } catch (error) {
@@ -159,15 +205,31 @@ export default function App() {
 
   return (
     <div className="flex min-h-screen bg-background text-on-surface">
+      {/* Mobile Sidebar Overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/80 z-40 md:hidden backdrop-blur-sm"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="fixed left-0 top-0 h-full w-20 md:w-64 border-r border-transparent bg-[#0d0e12] flex flex-col py-8 shadow-[40px_0_40px_-10px_rgba(133,173,255,0.08)] z-50">
-        <div className="px-6 mb-12">
-          <h1 className="text-2xl font-black tracking-tighter text-[#85adff] font-headline">What'sYourMov</h1>
-          <p className="font-manrope tracking-tight font-light text-[10px] uppercase text-slate-500 mt-1">The Digital Curator</p>
+      <aside className={cn(
+        "fixed left-0 top-0 h-full w-64 border-r border-transparent bg-[#000000] flex flex-col py-8 shadow-[40px_0_40px_-10px_rgba(133,173,255,0.08)] z-50 transition-transform duration-300 md:translate-x-0",
+        isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+      )}>
+        <div className="px-6 mb-12 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-black tracking-tighter text-[#85adff] font-headline">What'sYourMov</h1>
+            <p className="font-manrope tracking-tight font-light text-[10px] uppercase text-slate-500 mt-1">The Digital Curator</p>
+          </div>
+          <button className="md:hidden p-1 text-slate-400 hover:text-white" onClick={() => setIsSidebarOpen(false)}>
+            <Close />
+          </button>
         </div>
-        
+
         <div className="px-4 mb-8">
-          <button 
+          <button
             onClick={handleNewChat}
             className="w-full flex items-center justify-center gap-2 py-3 bg-white/5 hover:bg-white/10 rounded-xl transition-all duration-300 border border-white/5 group"
           >
@@ -177,89 +239,63 @@ export default function App() {
         </div>
 
         <nav className="flex-1 space-y-2 overflow-y-auto">
-          <button 
-            onClick={() => setActiveTab('discover')}
+          <button
+            onClick={() => { setActiveTab('discover'); setIsSidebarOpen(false); }}
             className={cn(
               "w-full flex items-center gap-4 py-3 px-6 transition-all duration-300 group",
               activeTab === 'discover' ? "bg-[#85adff]/10 text-[#85adff] border-l-4 border-[#85adff]" : "text-slate-400 hover:text-slate-100 hover:bg-white/5"
             )}
           >
             <Explore />
-            <span className="hidden md:inline font-headline text-sm font-medium">Discover</span>
+            <span className="font-headline text-sm font-medium">Discover</span>
           </button>
-          
-          <button 
-            onClick={() => setActiveTab('watchlist')}
+
+          <button
+            onClick={() => { setActiveTab('watchlist'); setIsSidebarOpen(false); }}
             className={cn(
               "w-full flex items-center gap-4 py-3 px-6 transition-all duration-300 group",
               activeTab === 'watchlist' ? "bg-[#85adff]/10 text-[#85adff] border-l-4 border-[#85adff]" : "text-slate-400 hover:text-slate-100 hover:bg-white/5"
             )}
           >
             <Bookmarks />
-            <span className="hidden md:inline font-headline text-sm font-medium">Watchlist</span>
+            <span className="font-headline text-sm font-medium">Watchlist</span>
           </button>
 
-          <button 
-            onClick={() => setActiveTab('watched')}
+          <button
+            onClick={() => { setActiveTab('watched'); setIsSidebarOpen(false); }}
             className={cn(
               "w-full flex items-center gap-4 py-3 px-6 transition-all duration-300 group",
               activeTab === 'watched' ? "bg-[#85adff]/10 text-[#85adff] border-l-4 border-[#85adff]" : "text-slate-400 hover:text-slate-100 hover:bg-white/5"
             )}
           >
             <AutoAwesome />
-            <span className="hidden md:inline font-headline text-sm font-medium">Watched</span>
+            <span className="font-headline text-sm font-medium">Watched</span>
           </button>
 
-          <div className="pt-4 px-6">
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">History</p>
-            <div className="space-y-1">
-              {sessions.map(session => (
-                <button
-                  key={session.id}
-                  onClick={() => {
-                    setCurrentSessionId(session.id);
-                    setActiveTab('discover');
-                  }}
-                  className={cn(
-                    "w-full text-left px-2 py-1.5 rounded-lg text-xs truncate transition-colors",
-                    currentSessionId === session.id ? "bg-white/10 text-primary" : "text-slate-500 hover:bg-white/5 hover:text-slate-300"
-                  )}
-                >
-                  {session.title}
-                </button>
-              ))}
-            </div>
-          </div>
         </nav>
       </aside>
 
       {/* Main Content */}
       <main className={cn(
-        "flex-1 ml-20 md:ml-64 min-h-screen flex flex-col relative transition-all duration-500",
+        "flex-1 ml-0 md:ml-64 min-h-screen flex flex-col relative transition-all duration-500",
         selectedMovie && "lg:mr-[400px]"
       )}>
-        <header className="fixed top-0 right-0 left-20 md:left-64 z-40 bg-[#0d0e12]/60 backdrop-blur-xl flex justify-between items-center h-16 px-8 border-b border-white/5">
-          <div className="flex items-center gap-2">
-            <MovieIcon className="text-primary" />
-            <span className="text-lg font-bold tracking-tighter text-slate-100 font-headline">What'sYourMov</span>
+        <header className="fixed top-0 right-0 left-0 md:left-64 z-30 bg-[#000000]/60 backdrop-blur-xl flex justify-between items-center h-16 px-6 md:px-8 border-b border-white/5 transition-all">
+          <div className="flex items-center gap-3">
+            <button className="md:hidden p-2 -ml-2 rounded-lg hover:bg-white/5 text-slate-400" onClick={() => setIsSidebarOpen(true)}>
+              <Menu />
+            </button>
+            <MovieIcon className="text-primary hidden md:block" />
+            <span className="text-lg font-bold tracking-tighter text-slate-100 font-headline hidden sm:inline">What'sYourMov</span>
           </div>
           <div className="flex items-center gap-6">
-            <div className="hidden md:flex items-center bg-surface-container-lowest px-4 py-1.5 rounded-full border border-outline-variant/20 focus-within:ring-2 ring-[#83e8ff]/20 transition-all">
-              <Search className="text-sm text-slate-400 mr-2" />
-              <input 
-                className="bg-transparent border-none focus:ring-0 text-xs w-48 text-on-surface-variant font-body" 
-                placeholder="Search the archives..." 
-                type="text"
-              />
-            </div>
             <div className="flex items-center gap-4 text-slate-400">
-              <Notifications className="hover:text-primary cursor-pointer transition-colors" />
-              <AccountCircle className="hover:text-primary cursor-pointer transition-colors" />
+              <Coffee className="hover:text-primary cursor-pointer transition-colors" />
             </div>
           </div>
         </header>
 
-        <section className="flex-1 mt-16 px-6 md:px-12 py-12 max-w-4xl mx-auto w-full overflow-y-auto">
+        <section className="flex-1 mt-16 px-4 md:px-12 py-8 md:py-12 max-w-4xl mx-auto w-full overflow-y-auto">
           {activeTab === 'discover' ? (
             <div className="space-y-12">
               {!currentSession || currentSession.messages.length === 0 ? (
@@ -273,7 +309,7 @@ export default function App() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-lg">
                     {["Visually stunning sci-fi like Blade Runner", "Neo-noir mysteries with deep themes", "Grand scale space epics", "Intimate philosophical dramas"].map(suggestion => (
-                      <button 
+                      <button
                         key={suggestion}
                         onClick={() => setInput(suggestion)}
                         className="p-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 text-left text-sm transition-all"
@@ -308,20 +344,20 @@ export default function App() {
                               <ReactMarkdown>{message.content}</ReactMarkdown>
                             </div>
                           </div>
-                          
+
                           {message.movies && (
                             <div className="flex flex-col gap-6">
                               {message.movies.map((movie) => (
-                                <div 
-                                  key={movie.id} 
+                                <div
+                                  key={movie.id}
                                   className="group cursor-pointer bg-surface-container/30 rounded-2xl overflow-hidden border border-white/5 hover:bg-white/5 transition-all"
                                   onClick={() => setSelectedMovie(movie)}
                                 >
                                   <div className="flex flex-col md:flex-row gap-6 p-4">
-                                    <MoviePoster 
-                                      src={movie.posterUrl} 
-                                      alt={movie.title} 
-                                      className="w-full md:w-48 aspect-[2/3] rounded-xl shrink-0" 
+                                    <MoviePoster
+                                      src={movie.posterUrl}
+                                      alt={movie.title}
+                                      className="w-full md:w-48 aspect-[2/3] rounded-xl shrink-0"
                                     />
                                     <div className="flex-1 flex flex-col justify-center py-2">
                                       <div className="flex items-center gap-3 mb-2">
@@ -376,15 +412,15 @@ export default function App() {
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {(activeTab === 'watchlist' ? watchlist : watchedList).map(movie => (
-                  <div 
-                    key={movie.id} 
+                  <div
+                    key={movie.id}
                     className="group cursor-pointer flex gap-4 items-center p-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-all"
                     onClick={() => setSelectedMovie(movie)}
                   >
-                    <MoviePoster 
-                      src={movie.posterUrl} 
-                      alt={movie.title} 
-                      className="w-24 h-32 rounded-lg" 
+                    <MoviePoster
+                      src={movie.posterUrl}
+                      alt={movie.title}
+                      className="w-24 h-32 rounded-lg"
                     />
                     <div>
                       <h4 className="font-headline font-bold text-on-surface uppercase">{movie.title}</h4>
@@ -413,19 +449,19 @@ export default function App() {
             <div className="relative group">
               <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/20 to-secondary/20 rounded-[2rem] blur opacity-0 group-focus-within:opacity-100 transition-opacity duration-500"></div>
               <div className="relative flex items-center gap-4 bg-surface-container-lowest border border-outline-variant/10 rounded-[2rem] p-2 pl-6 shadow-2xl">
-                <input 
+                <input
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                  className="flex-1 bg-transparent border-none focus:ring-0 text-on-surface py-3 font-body text-base placeholder:text-slate-600" 
-                  placeholder="Ask the Digital Curator anything..." 
+                  className="flex-1 bg-transparent border-none focus:ring-0 text-on-surface py-3 font-body text-base placeholder:text-slate-600"
+                  placeholder="Ask the Digital Curator anything..."
                   type="text"
                 />
                 <div className="flex items-center gap-2 pr-2">
                   <button className="w-10 h-10 rounded-full flex items-center justify-center text-slate-500 hover:text-white hover:bg-white/5 transition-all">
                     <AttachFile />
                   </button>
-                  <button 
+                  <button
                     onClick={handleSendMessage}
                     disabled={isLoading}
                     className="w-10 h-10 rounded-full flex items-center justify-center bg-gradient-to-br from-primary to-primary-container text-on-primary shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
@@ -443,7 +479,7 @@ export default function App() {
       {/* Movie Detail Sidebar */}
       <AnimatePresence>
         {selectedMovie && (
-          <motion.aside 
+          <motion.aside
             initial={{ x: 400 }}
             animate={{ x: 0 }}
             exit={{ x: 400 }}
@@ -451,20 +487,20 @@ export default function App() {
             className="fixed right-0 top-0 h-full w-full md:w-[400px] bg-surface-container-low border-l border-outline-variant/5 flex-col overflow-y-auto z-[60]"
           >
             <div className="relative w-full aspect-[4/5] overflow-hidden">
-              <MoviePoster 
-                src={selectedMovie.posterUrl} 
-                alt={selectedMovie.title} 
-                className="w-full h-full" 
+              <MoviePoster
+                src={selectedMovie.posterUrl}
+                alt={selectedMovie.title}
+                className="w-full h-full"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-surface-container-low via-transparent to-transparent"></div>
-              <button 
+              <button
                 onClick={() => setSelectedMovie(null)}
                 className="absolute top-6 right-6 w-10 h-10 rounded-full glass-panel flex items-center justify-center text-white hover:bg-white/20 transition-all"
               >
                 <Close />
               </button>
             </div>
-            
+
             <div className="px-8 -mt-20 relative z-10 pb-12">
               <div className="flex items-end justify-between mb-6">
                 <div>
@@ -495,7 +531,9 @@ export default function App() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-surface-container p-4 rounded-xl border border-outline-variant/10">
-                    <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Runtime</p>
+                    <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">
+                      {selectedMovie.runtime?.toLowerCase().includes('season') ? 'Seasons' : 'Runtime'}
+                    </p>
                     <p className="font-bold text-on-surface">{selectedMovie.runtime}</p>
                   </div>
                   <div className="bg-surface-container p-4 rounded-xl border border-outline-variant/10">
@@ -504,7 +542,7 @@ export default function App() {
                   </div>
                 </div>
                 <div className="pt-4 space-y-3">
-                  <button 
+                  <button
                     onClick={() => toggleWatchlist(selectedMovie)}
                     className={cn(
                       "w-full py-4 rounded-xl font-headline font-bold text-sm shadow-xl transition-all hover:scale-[1.02]",
@@ -515,7 +553,7 @@ export default function App() {
                   >
                     {watchlist.some(m => m.title === selectedMovie.title) ? 'Remove from Watchlist' : 'Add to Watchlist'}
                   </button>
-                  <button 
+                  <button
                     onClick={() => toggleWatched(selectedMovie)}
                     className={cn(
                       "w-full py-4 rounded-xl border font-headline font-bold text-sm transition-all",
@@ -535,3 +573,4 @@ export default function App() {
     </div>
   );
 }
+

@@ -55,3 +55,11 @@ export const Close = ({ className }) => (
 export const Star = ({ className, fill }) => (
   <span className={`material-symbols-outlined ${className}`} style={{ fontVariationSettings: `'FILL' ${fill ? 1 : 0}` }}>star</span>
 );
+
+export const Coffee = ({ className }) => (
+  <span className={`material-symbols-outlined ${className}`}>local_cafe</span>
+);
+
+export const Menu = ({ className }) => (
+  <span className={`material-symbols-outlined ${className}`}>menu</span>
+);
