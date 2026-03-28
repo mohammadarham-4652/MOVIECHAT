@@ -419,21 +419,20 @@ export default function App() {
               <h2 className="text-4xl font-headline font-black text-white">
                 {activeTab === 'watchlist' ? 'Your Watchlist' : 'Watched Archives'}
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {(activeTab === 'watchlist' ? watchlist : watchedList).map(movie => (
                   <div
                     key={movie.id}
-                    className="group cursor-pointer flex gap-4 items-center p-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-all"
+                    className="group cursor-pointer rounded-2xl overflow-hidden bg-white/5 border border-white/5 hover:bg-white/10 hover:scale-[1.02] transition-all duration-300"
                     onClick={() => setSelectedMovie(movie)}
                   >
                     <MoviePoster
                       src={movie.posterUrl}
                       alt={movie.title}
-                      className="w-24 h-32 rounded-lg"
+                      className="w-full aspect-[2/3]"
                     />
-                    <div>
-                      <h4 className="font-headline font-bold text-on-surface uppercase">{movie.title}</h4>
-                      <p className="text-sm text-slate-500 mt-1 line-clamp-2">{movie.description}</p>
+                    <div className="p-3">
+                      <h4 className="font-headline font-bold text-on-surface uppercase text-sm leading-tight line-clamp-2">{movie.title}</h4>
                       <div className="flex gap-2 mt-2">
                         <span className="text-[10px] bg-surface-container-high px-2 py-0.5 rounded text-slate-400">{movie.year}</span>
                         <span className="text-[10px] bg-surface-container-high px-2 py-0.5 rounded text-slate-400">{movie.rating}</span>
