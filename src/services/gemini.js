@@ -51,8 +51,8 @@ You must reply in valid JSON format. Your JSON must strictly follow this exact s
     });
 
     if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error?.message || "Groq API error");
+      const errorData = await response.json();
+      throw new Error(errorData.error?.message || "Groq API error");
     }
 
     const data = await response.json();
