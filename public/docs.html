@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Documentation — What'sYourMov</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700&family=DM+Serif+Display&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    html { scroll-behavior: smooth; }
+    
+    body {
+      background: #000;
+      color: #c8c8d0;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      font-size: 17px;
+      line-height: 1.85;
+      min-height: 100vh;
+      padding: 0;
+    }
+
+    .wrapper {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 80px 32px 120px;
+    }
+
+    .back {
+      display: inline-block;
+      font-size: 13px;
+      color: #555;
+      text-decoration: none;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 64px;
+      transition: color 0.2s;
+    }
+    .back:hover { color: #85adff; }
+
+    .eyebrow {
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #3a3f55;
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(2.4rem, 6vw, 3.8rem);
+      font-weight: 400;
+      color: #eaeaf0;
+      line-height: 1.1;
+      margin-bottom: 20px;
+    }
+
+    .subtitle {
+      font-size: 15px;
+      color: #44475a;
+      margin-bottom: 72px;
+      letter-spacing: 0.02em;
+    }
+
+    .divider {
+      width: 40px;
+      height: 1px;
+      background: #1e2030;
+      margin-bottom: 72px;
+    }
+
+    h2 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.4rem;
+      font-weight: 400;
+      color: #dddde8;
+      margin-bottom: 18px;
+      margin-top: 60px;
+    }
+
+    p {
+      color: #888898;
+      margin-bottom: 22px;
+    }
+
+    p strong {
+      color: #b8b8cc;
+      font-weight: 500;
+    }
+
+    .section {
+      border-top: 1px solid #0f0f15;
+      padding-top: 48px;
+      margin-top: 48px;
+    }
+
+    .note {
+      background: #0a0a12;
+      border-left: 2px solid #1e2540;
+      padding: 20px 24px;
+      border-radius: 0 8px 8px 0;
+      margin-top: 32px;
+    }
+    .note p {
+      margin-bottom: 0;
+      font-size: 14px;
+      color: #555570;
+    }
+
+    footer {
+      margin-top: 100px;
+      font-size: 12px;
+      color: #2a2a38;
+      letter-spacing: 0.08em;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <a class="back" href="./index.html">← Back to the app</a>
+
+    <p class="eyebrow">What'sYourMov</p>
+    <h1>Documentation</h1>
+    <p class="subtitle">Everything worth knowing about how this thing works.</p>
+
+    <div class="divider"></div>
+
+    <p>This tool was built for one specific reason. Picking something to watch has turned into its own exhausting task. Scrolling through streamer homepages filled with recommended content you already dismissed, reading reviews that tell you nothing about whether you personally will enjoy the film, eventually settling on something you feel indifferent about. This is meant to fix that.</p>
+
+    <p>You give it a feeling. It gives you exactly three films or series that match it. That is the entire idea.</p>
+
+    <div class="section">
+      <h2>Getting a recommendation</h2>
+      <p>Type anything you want into the prompt at the bottom of the screen. It does not need to be a genre or a keyword. You can describe a mood, a visual style, a tempo, a time period, a filmmaker you admire, or a concept you want to think about for two hours. The system understands language, not just taxonomy.</p>
+      <p>Once you submit your prompt, the curator returns a short analysis of your request followed by three handpicked recommendations. Each one comes with a poster, a premise, a rating, and where relevant, the number of seasons instead of a runtime.</p>
+      <p>Click any card to expand it and see the full details in the side panel.</p>
+    </div>
+
+    <div class="section">
+      <h2>Your library</h2>
+      <p>From the detail panel you can add any title to your watchlist or mark it as watched. Both of these lists live in your sidebar under Watchlist and Watched. None of this data touches a server. It all stays on your device inside your browser's local storage, which means it persists between sessions as long as you are on the same device and browser.</p>
+      <p>If you clear your browser data it will reset. There is no cloud sync. It is intentionally simple.</p>
+    </div>
+
+    <div class="section">
+      <h2>The poster system</h2>
+      <p>Every recommendation comes with an attempt to pull the official theatrical poster for that title. The system tries several different image sources in order. If the primary source is blocked by your network, it reroutes the request through a proxy so the visual experience stays intact. In rare cases where no poster is found, it falls back to a placeholder image. This is atypical for mainstream titles.</p>
+    </div>
+
+    <div class="section">
+      <h2>Web series</h2>
+      <p>The curator handles both films and television series. You do not need to specify which one you want. If your prompt lends itself to a long form recommendation, it may return a series. When it does, the runtime field in the detail panel automatically changes to display the number of seasons instead.</p>
+    </div>
+
+    <div class="section">
+      <h2>Mobile</h2>
+      <p>On smaller screens the sidebar is hidden by default. Tap the menu icon in the top left corner to open it. Tapping any item in the sidebar or tapping outside of it will close it again.</p>
+    </div>
+
+    <div class="section">
+      <h2>Things that will not work as expected</h2>
+      <p>The system is designed for conversational prompts, not keyword searches. Typing a single word like "action" will produce reasonable results but far less specific ones than something like "crime films that take place over a single night." The more context you give it, the more precisely it can match your taste.</p>
+      <p>The service that powers the recommendations is rate limited. Under normal use this is completely invisible. If you send a very large number of requests in a short window you may see a temporary failure. Waiting a minute and retrying resolves it every time.</p>
+
+      <div class="note">
+        <p>Your conversation history within a session informs each recommendation. If you mentioned earlier that you dislike horror, the curator will factor that in for the rest of the session. Starting a new chat resets this context entirely.</p>
+      </div>
+    </div>
+
+    <footer>What'sYourMov &nbsp;&middot;&nbsp; The Digital Curator</footer>
+  </div>
+</body>
+</html>

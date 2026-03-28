@@ -290,6 +290,15 @@ export default function App() {
           </div>
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-4 text-slate-400">
+              <a
+                href="./docs.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-primary transition-colors text-xl leading-none"
+                title="Documentation"
+              >
+                📄
+              </a>
               <Coffee className="hover:text-primary cursor-pointer transition-colors" />
             </div>
           </div>
