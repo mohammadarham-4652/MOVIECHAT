@@ -492,9 +492,10 @@ export default function App() {
             animate={{ x: 0 }}
             exit={{ x: 400 }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed right-0 top-0 h-full w-full md:w-[400px] bg-surface-container-low border-l border-outline-variant/5 flex-col overflow-y-auto z-[60]"
+            className="fixed right-0 top-0 h-screen w-full md:w-[400px] bg-surface-container-low border-l border-outline-variant/5 flex flex-col overflow-hidden z-[60]"
           >
-            <div className="relative w-full aspect-[4/5] overflow-hidden">
+            {/* Fixed-height poster — never exceeds 38% of viewport */}
+            <div className="relative w-full shrink-0 overflow-hidden" style={{ height: '38%' }}>
               <MoviePoster
                 src={selectedMovie.posterUrl}
                 alt={selectedMovie.title}
@@ -503,57 +504,74 @@ export default function App() {
               <div className="absolute inset-0 bg-gradient-to-t from-surface-container-low via-transparent to-transparent"></div>
               <button
                 onClick={() => setSelectedMovie(null)}
-                className="absolute top-6 right-6 w-10 h-10 rounded-full glass-panel flex items-center justify-center text-white hover:bg-white/20 transition-all"
+                className="absolute top-4 right-4 w-9 h-9 rounded-full glass-panel flex items-center justify-center text-white hover:bg-white/20 transition-all"
               >
                 <Close />
               </button>
             </div>
 
-            <div className="px-8 -mt-20 relative z-10 pb-12">
-              <div className="flex items-end justify-between mb-6">
+            {/* Scrollable content — fills remaining height */}
+            <div className="flex-1 overflow-y-auto px-6 -mt-14 relative z-10 pb-6">
+              <div className="flex items-end justify-between mb-3">
                 <div>
-                  <h2 className="text-4xl font-headline font-black text-white leading-none uppercase">{selectedMovie.title}</h2>
-                  <p className="text-primary font-medium mt-2">Directed by {selectedMovie.director}</p>
+                  <h2 className="text-3xl font-headline font-black text-white leading-none uppercase">{selectedMovie.title}</h2>
+                  <p className="text-primary font-medium mt-1 text-sm">Directed by {selectedMovie.director}</p>
                 </div>
-                <div className="text-right">
-                  <div className="flex items-center gap-1 text-tertiary mb-1">
+                <div className="text-right shrink-0 ml-2">
+                  <div className="flex items-center gap-1 text-tertiary mb-0.5">
                     <Star className="text-sm" fill />
-                    <span className="font-bold">{selectedMovie.rating}</span>
+                    <span className="font-bold text-sm">{selectedMovie.rating}</span>
                   </div>
-                  <p className="text-[10px] text-slate-500 font-label uppercase">IMDb Score</p>
+                  <p className="text-[9px] text-slate-500 font-label uppercase">IMDb Score</p>
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-2 mb-8">
+              <div className="flex flex-wrap gap-1.5 mb-4">
                 {selectedMovie.genre.map(g => (
-                  <span key={g} className="px-3 py-1 rounded-full bg-surface-container-highest text-slate-300 text-xs font-medium">{g}</span>
+                  <span key={g} className="px-2.5 py-0.5 rounded-full bg-surface-container-highest text-slate-300 text-xs font-medium">{g}</span>
                 ))}
               </div>
 
-              <div className="space-y-6">
+              <div className="space-y-4">
                 <div>
-                  <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">The Premise</h4>
-                  <p className="text-on-surface-variant leading-relaxed font-body text-sm">
+                  <h4 className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-2">The Premise</h4>
+                  <p className="text-on-surface-variant leading-relaxed font-body text-sm line-clamp-4">
                     {selectedMovie.description}
                   </p>
+                  <a
+                    href={`https://www.google.com/search?q=${encodeURIComponent(selectedMovie.title + ' where to watch')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 px-5 rounded-2xl font-headline font-bold text-sm text-emerald-300 transition-all duration-300 hover:scale-[1.02] hover:text-emerald-200"
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(16,185,129,0.12) 0%, rgba(5,150,105,0.08) 100%)',
+                      backdropFilter: 'blur(16px)',
+                      WebkitBackdropFilter: 'blur(16px)',
+                      border: '1px solid rgba(52,211,153,0.25)',
+                      boxShadow: '0 0 18px rgba(16,185,129,0.12), inset 0 1px 0 rgba(255,255,255,0.08)'
+                    }}
+                  >
+                    <span style={{ filter: 'drop-shadow(0 0 4px rgba(52,211,153,0.7))' }}>▶</span>
+                    Where to Stream
+                  </a>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-surface-container p-4 rounded-xl border border-outline-variant/10">
-                    <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-surface-container p-3 rounded-xl border border-outline-variant/10">
+                    <p className="text-[9px] text-slate-500 uppercase tracking-widest mb-1">
                       {selectedMovie.runtime?.toLowerCase().includes('season') ? 'Seasons' : 'Runtime'}
                     </p>
-                    <p className="font-bold text-on-surface">{selectedMovie.runtime}</p>
+                    <p className="font-bold text-on-surface text-sm">{selectedMovie.runtime}</p>
                   </div>
-                  <div className="bg-surface-container p-4 rounded-xl border border-outline-variant/10">
-                    <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Release</p>
-                    <p className="font-bold text-on-surface">{selectedMovie.releaseDate}</p>
+                  <div className="bg-surface-container p-3 rounded-xl border border-outline-variant/10">
+                    <p className="text-[9px] text-slate-500 uppercase tracking-widest mb-1">Release</p>
+                    <p className="font-bold text-on-surface text-sm">{selectedMovie.releaseDate}</p>
                   </div>
                 </div>
-                <div className="pt-4 space-y-3">
+                <div className="space-y-2">
                   <button
                     onClick={() => toggleWatchlist(selectedMovie)}
                     className={cn(
-                      "w-full py-4 rounded-xl font-headline font-bold text-sm shadow-xl transition-all hover:scale-[1.02]",
+                      "w-full py-3 rounded-xl font-headline font-bold text-sm shadow-xl transition-all hover:scale-[1.02]",
                       watchlist.some(m => m.title === selectedMovie.title)
                         ? "bg-white/10 text-white border border-white/10"
                         : "bg-gradient-to-r from-primary to-primary-container text-on-primary shadow-primary/10"
@@ -564,7 +582,7 @@ export default function App() {
                   <button
                     onClick={() => toggleWatched(selectedMovie)}
                     className={cn(
-                      "w-full py-4 rounded-xl border font-headline font-bold text-sm transition-all",
+                      "w-full py-3 rounded-xl border font-headline font-bold text-sm transition-all",
                       watchedList.some(m => m.title === selectedMovie.title)
                         ? "bg-secondary/20 text-secondary border-secondary/20"
                         : "bg-white/5 border-white/5 text-white hover:bg-white/10"
